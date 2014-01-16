@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dxtex", "dxtex_2010.vcxproj", "{77DE4B17-4040-4F08-8B21-9EE90F24F077}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77DE4B17-4040-4F08-8B21-9EE90F24F077}.Debug|Win32.ActiveCfg = Debug|Win32
+		{77DE4B17-4040-4F08-8B21-9EE90F24F077}.Debug|Win32.Build.0 = Debug|Win32
+		{77DE4B17-4040-4F08-8B21-9EE90F24F077}.Release|Win32.ActiveCfg = Release|Win32
+		{77DE4B17-4040-4F08-8B21-9EE90F24F077}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

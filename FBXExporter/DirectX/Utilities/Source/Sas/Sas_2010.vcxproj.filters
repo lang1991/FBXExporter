@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns:atg="http://atg.xbox.com" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<ItemGroup>
+<Filter Include="Resource Files">
+<UniqueIdentifier>{8e114980-c1a3-4ada-ad7c-83caadf5daeb}</UniqueIdentifier>
+<Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+</Filter>
+</ItemGroup>
+<ItemGroup />
+<ItemGroup>
+      <ClCompile Include="stdafx.cpp" />
+      <CLInclude Include="stdafx.h" />
+      <ClCompile Include="Effect9.cpp" />
+      <CLInclude Include="Effect9.h" />
+      <ClCompile Include="Effect10.cpp" />
+      <CLInclude Include="Effect10.h" />
+      <ClCompile Include="BindAddress.cpp" />
+      <CLInclude Include="BindAddress.h" />
+      <ClCompile Include="BoundValueTable.cpp" />
+      <CLInclude Include="BoundValueTable.h" />
+      <ClCompile Include="Control.cpp" />
+      <CLInclude Include="Control.h" />
+      <ClCompile Include="DataType.cpp" />
+      <CLInclude Include="DataType.h" />
+      <ClCompile Include="Effect.cpp" />
+      <CLInclude Include="Effect.h" />
+      <CLInclude Include="FilePath.h" />
+      <ClCompile Include="Host.cpp" />
+      <CLInclude Include="Host.h" />
+      <ClCompile Include="Integrator.cpp" />
+      <CLInclude Include="Integrator.h" />
+      <ClCompile Include="Parameter.cpp" />
+      <CLInclude Include="Parameter.h" />
+      <ClCompile Include="Sas.cpp" />
+      <CLInclude Include="Sas.h" />
+      <ClCompile Include="Unit.cpp" />
+      <CLInclude Include="Unit.h" />
+      <ClCompile Include="Value.cpp" />
+      <CLInclude Include="Value.h" />
+  
+      <None Include="Sas.fxh" />
+  
+  </ItemGroup>
+<ItemGroup></ItemGroup>
+<ItemGroup></ItemGroup>
+<ItemGroup></ItemGroup>
+</Project>
