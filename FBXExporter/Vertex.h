@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <stdint.h>
 #include <xnamath.h>
+#include <vector>
+using namespace std;
 
 namespace Vertex
 {
@@ -23,5 +25,14 @@ namespace Vertex
 
 			return XMComparisonAllTrue(position) && XMComparisonAllTrue(normal) && XMComparisonAllTrue(uv);
 		}
+	};
+
+	struct PNTIWVertex
+	{
+		XMFLOAT3 mPosition;
+		XMFLOAT3 mNormal;
+		XMFLOAT2 mUV;
+		vector<unsigned int> mBlendIndices;
+		vector<float> mBlendWeight;
 	};
 }
