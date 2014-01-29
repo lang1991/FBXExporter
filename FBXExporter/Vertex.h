@@ -27,12 +27,23 @@ namespace Vertex
 		}
 	};
 
+	struct VertexBlendingInfo
+	{
+		unsigned int mBlendingIndex;
+		float mBlendingWeight;
+
+		VertexBlendingInfo():
+			mBlendingIndex(0),
+			mBlendingWeight(0.0f)
+		{}
+	};
+
 	struct PNTIWVertex
 	{
 		XMFLOAT3 mPosition;
 		XMFLOAT3 mNormal;
 		XMFLOAT2 mUV;
-		vector<unsigned int> mBlendIndices;
-		vector<float> mBlendWeight;
+		int mCtrlpointIndex;
+		vector<VertexBlendingInfo> mVertexBlendingInfos;
 	};
 }

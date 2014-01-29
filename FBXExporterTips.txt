@@ -1,0 +1,127 @@
+In FBX, a FbxSkin is a type of FbxDeformer.
+And each FbxDeformer contains a FbxCluster.(So technically, a FbxSkin contains a FbxCluster).
+FbxCluster contains a "link" to a bone, which is word we are familiar with.
+Each link of FbxCluster(namely, a bone) has the so-called TransformLinkMatrix, which, in our language, is the BindPose Matrix in model space.
+
+With the knowledge above, we have the following:
+
+Assume FbxDeformer* deformer is given, and we know it is a FbxSkin.(In other words, the artist does not use any other type of deformers when making the model in Maya)
+FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer)
+FbxCluster* cluster = skin->GetCluster(indexOfCluster); // there can be more than one cluster and this is usually performed inside a loop travering all the clusters
+
+cluster->GetLink() // this is a Bone
+cluster->GetLink()->GetName() // this is the name of the Bone (Something like HipL, Spine, bla bla bla)
+cluster->GetTransformLinkMatrix() // this is the very important BindPose matrix in model space
+
+
+
+
+
+
+So, given a mesh binding with several bones(links), Transform is the global transform of the mesh at the binding moment, TransformLink is the global transform of the bone(link) at the binding moment.
+
+
+
+It turns out
+
+
+
+I need to:
+Change the way I export vertices according to: http://forums.autodesk.com/t5/FBX-SDK/Correct-Translation-of-Vertices/m-p/4159436
+
+
+
+
+
+// Basically the objective here is to list the weights on each vertex.
+// m_vInfluenceLists is basically an array (std::vector) of vertices (control points).
+// For each vertex/control point in m_vInfluenceLists, we store an array
+//  of influences, which are basically just the bone index and the floating-point
+//  weight value.
+// This code does this:
+
+// Store the weight on this vertex.
+// iInf.fWeight = static_cast<LSSFLOAT>(pcCluster->GetControlPointWeights()[K]);
+
+// The actual vertex/control point modified by this joint.
+// iInf.ui32VertIndex = pcCluster->GetControlPointIndices()[K];
+
+// The index of the joint that modifies has this influence.
+// iInf.ui32Index = J;
+
+// Add the bone and weight information to the vertex/control point.
+// iInf.ui32VertIndex = actual vertex to be modified by the given bone by the
+//  amount.
+// m_vInfluenceLists[iInf.ui32VertIndex].Push( iInf );
+
+
+	/**
+	 * Extract skinning information from a geometry node.
+	 *
+	 * \param _mObj The object from which to extract skinning data.
+	 * \return Returns true if there are no memory failures.
+	 */
+	LSSBOOL LSSTD_CALL CSkinData::ExtractSkin( const KFbxMesh &_mObj ) {
+		KFbxCluster * pcCluster;
+		LSSUINT32 ui32TotalSkins = _mObj.GetDeformerCount( KFbxDeformer::eSKIN );
+
+
+		for ( LSSUINT32 I = 0; I < ui32TotalSkins; ++I ) {
+			KFbxSkin * psSkin = reinterpret_cast<KFbxSkin *>(_mObj.GetDeformer( I, KFbxDeformer::eSKIN ));
+			m_sName = psSkin->GetName();
+			LSSUINT32 ui32ClusterCount = psSkin->GetClusterCount();
+
+			// Fill out enough influences to cover the whole geometry.
+			m_vInfluenceLists.Resize( _mObj.GetPolygonVertexCount() );
+
+			for ( LSSUINT32 J = 0UL; J < ui32ClusterCount; ++J ) {
+				pcCluster = psSkin->GetCluster( J );
+
+				if ( pcCluster->GetLink() ) {
+					m_vJointNames.Push( pcCluster->GetLink()->GetName() );
+
+
+					LSSUINT32 ui32Points = pcCluster->GetControlPointIndicesCount();
+
+					static LSSBOOL bWarnedPoints = false;
+					if ( ui32Points >= m_vInfluenceLists.Length() ) {
+						if ( !bWarnedPoints ) {
+							CStd::DebugPrintA( "Skinning data in FBX file is corrupted (influences are larger than the number of vertices).  Model may not appear correctly.\r\n" );
+							bWarnedPoints = true;
+						}
+						
+						// Cap the number of points.
+						ui32Points = m_vInfluenceLists.Length();
+					}
+					for ( LSSUINT32 K = 0UL; K < ui32Points; ++K ) {
+						// If there is actually a weight value here, add it.
+						if ( pcCluster->GetControlPointWeights()[K] > 0.0 ) {
+							LSFBX_INFLUENCE iInf;
+							iInf.fWeight = static_cast<LSSFLOAT>(pcCluster->GetControlPointWeights()[K]);
+							iInf.ui32VertIndex = pcCluster->GetControlPointIndices()[K];
+
+							// Apparently some FBX files can contain invalid data here.
+							//	One of my test files was giving me vertex indices in the range of 4,000+ when there were actually
+							//	only 2,000 vertices in the whole file!
+							// Print a warning but don't crash or stop.
+							static LSSBOOL bWarned = false;
+							if ( iInf.ui32VertIndex >= m_vInfluenceLists.Length() ) {
+								if ( !bWarned ) {
+									CStd::DebugPrintA( "Skinning data in FBX file is corrupted (influences reference non-existant vertices).  Model may not appear correctly.\r\n" );
+									bWarned = true;
+								}
+								continue;
+							}
+							iInf.ui32Index = J;
+							m_vInfluenceLists[iInf.ui32VertIndex].Push( iInf );
+						}
+					}
+				}
+			}
+
+			return true;
+		}
+
+
+		return true;
+	}

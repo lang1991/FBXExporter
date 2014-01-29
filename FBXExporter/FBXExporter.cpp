@@ -61,10 +61,12 @@ void FBXExporter::ExportFBX()
 {
 	ProcessSkeletonHierarchy(mFBXScene->GetRootNode());
 	ProcessGeometry(mFBXScene->GetRootNode());
+	AssociateBonesWithVertices();
+	//PrintVertexBlendingInfo();
 	//AssembleVertices();
 	//ReduceVertices();
-	std::ofstream myfile(".\\exportedModels\\skybreakerIdle.itpmesh");
-	WriteSceneToStream(myfile);
+	//std::ofstream myfile(".\\exportedModels\\skybreakerIdle.itpmesh");
+	//WriteSceneToStream(myfile);
 	std::cout << "\n\nExport Done!\n";
 }
 
@@ -75,30 +77,8 @@ void FBXExporter::ProcessGeometry(FbxNode* inNode)
 		switch (inNode->GetNodeAttribute()->GetAttributeType())
 		{
 		case FbxNodeAttribute::eMesh:
-			//TestGeometryTrans(inNode);
-			/*
-			FbxMatrix convert;
-			FbxMatrix temp(mFBXScene->GetAnimationEvaluator()->GetNodeGlobalTransform(inNode));
-			convert.mData[0][0] = 1;
-			convert.mData[0][1] = 0;
-			convert.mData[0][2] = 0;
-			convert.mData[0][3] = 0;
-			convert.mData[1][0] = 0;
-			convert.mData[1][1] = 0;
-			convert.mData[1][2] = 1;
-			convert.mData[1][3] = 0;
-			convert.mData[2][0] = 0;
-			convert.mData[2][1] = 1;
-			convert.mData[2][2] = 0;
-			convert.mData[2][3] = 0;
-			convert.mData[3][0] = 0;
-			convert.mData[3][1] = 0;
-			convert.mData[3][2] = 0;
-			convert.mData[3][3] = 1;
-			*/
-			//PrintMatrix(temp * convert);
 			ProcessMesh(inNode);
-			//ProcessBones(inNode);
+			ProcessBones(inNode);
 			break;
 		}
 	}
@@ -145,10 +125,11 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 
 
 			mIndexBuffer[i * 3 + j] = vertexCounter;
-			PNTVertex temp;
+			PNTIWVertex temp;
 			temp.mPosition = position[j];
 			temp.mNormal = normal[j];
 			temp.mUV = UV[j][0];
+			temp.mCtrlpointIndex = ctrlPointIndex;
 
 			mVertices.push_back(temp);
 			++vertexCounter;
@@ -160,6 +141,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 {
 	FbxMesh* currMesh = inNode->GetMesh();
 	unsigned int numOfDeformers = currMesh->GetDeformerCount();
+	FbxAMatrix geometryTransform = GetGeometryTransformation(inNode);
 	for (unsigned int deformerIndex = 0; deformerIndex < numOfDeformers; ++deformerIndex)
 	{
 		FbxSkin* currSkin = reinterpret_cast<FbxSkin*>(currMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
@@ -172,49 +154,55 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 		for(unsigned int clusterIndex = 0; clusterIndex < numOfClusters; ++clusterIndex)
 		{
 			FbxCluster* currCluster = currSkin->GetCluster(clusterIndex);
-			int count = 0;
-			if (currCluster->GetAssociateModel())
-			{
-				cout << "This joint: " << currCluster->GetLink()->GetName()<<" is fucked up!\n";
-				++count;
-			}
-			cout<<"# of unfucked joint: "<<count<<"\n";
-			cout<<"# of total joint: "<<mSkeleton.mBones.size()<<"\n";
-			/*
-			FbxAMatrix transformLinkInv;
-			currCluster->GetTransformLinkMatrix(transformLinkInv);
-			transformLinkInv = transformLinkInv.Inverse();
-			FbxAMatrix transform;
-			currCluster->GetTransformMatrix(transform);
-			FbxAMatrix bindposeInv = (transformLinkInv * transform).Inverse();
-			mBindposeLookup[currCluster->GetLink()->GetName()] = bindposeInv;
+			FbxAMatrix transformMatrix;						// The transformation of the mesh at binding time
+			FbxAMatrix transformLinkMatrix;					// The transformation of the cluster(joint) at binding time from joint space to world space
+			FbxAMatrix localBindposeMatrix;
+			currCluster->GetTransformMatrix(transformMatrix);
+			currCluster->GetTransformLinkMatrix(transformLinkMatrix);
+			localBindposeMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
 
-
-			cout << "Name of bone: " << currCluster->GetLink()->GetName() << endl;
-			cout<<"Inverse Bindpose:\n";
-			
-			FbxString lMatrixValue;
-			for (int k = 0; k<4; ++k)
+			BoneInfoContainer currBoneInfo;
+			currBoneInfo.mClusterLink = currCluster->GetLink();
+			currBoneInfo.mBindpose = localBindposeMatrix;
+			unsigned int numOfIndices = currCluster->GetControlPointIndicesCount();
+			for(unsigned int i = 0; i < numOfIndices; ++i)
 			{
-				FbxVector4 lRow = transform.GetRow(k);
-				char        lRowValue[1024];
-				FBXSDK_sprintf(lRowValue, 1024, "%9.4f %9.4f %9.4f %9.4f\n", lRow[0], lRow[1], lRow[2], lRow[3]);
-				lMatrixValue += FbxString("        ") + FbxString(lRowValue);
+				CtrlpointWeightPair currCtrlpointWeightPair;
+				currCtrlpointWeightPair.mCtrlPointIndex = currCluster->GetControlPointIndices()[i];
+				currCtrlpointWeightPair.mWeight = currCluster->GetControlPointWeights()[i];
+				currBoneInfo.mBlendingInfo.push_back(currCtrlpointWeightPair);
 			}
 
-			cout << lMatrixValue.Buffer();
-			cout<<endl;
-			*/
+
+			// Now only supports one take
+			FbxAnimStack* currAnimStack = mFBXScene->GetSrcObject<FbxAnimStack>(0);
+			FbxString animStackName = currAnimStack->GetName();
+			FbxTakeInfo* takeInfo = mFBXScene->GetTakeInfo(animStackName);
+			FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
+			FbxTime end = takeInfo->mLocalTimeSpan.GetStop();
+			Keyframe** currAnim = &currBoneInfo.mAnimation;
+
+			for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i <= end.GetFrameCount(FbxTime::eFrames24); ++i)
+			{
+				FbxTime currTime;
+				currTime.SetFrame(i, FbxTime::eFrames24);
+				*currAnim = new Keyframe();
+				(*currAnim)->mFrameNum = i;
+				(*currAnim)->mLocalTransform = currCluster->GetLink()->EvaluateLocalTransform(currTime);
+				currAnim = &((*currAnim)->mNext);
+			}
+
+			mBoneInfoLookup[currCluster->GetLink()->GetName()] = currBoneInfo;
 		}
-		cout<<"\n\n\n";
 	}
 
 	for(unsigned int i = 0; i < mSkeleton.mBones.size(); ++i)
 	{
-		auto update = mBindposeLookup.find(mSkeleton.mBones[i].mName);
-		if (update != mBindposeLookup.end())
+		auto update = mBoneInfoLookup.find(mSkeleton.mBones[i].mName);
+		if (update != mBoneInfoLookup.end())
 		{
-			mSkeleton.mBones[i].mBindPose = update->second;
+			mSkeleton.mBones[i].mBindPose = update->second.mBindpose;
+			mSkeleton.mBones[i].mAnimation = update->second.mAnimation;
 		}
 	}
 }
@@ -248,7 +236,6 @@ void FBXExporter::ProcessSkeletonHierarchyRecursively(FbxNode* inNode, int inDep
 	Bone currBone;
 	currBone.mParentIndex = inParentIndex;
 	currBone.mName = inNode->GetName();
-	currBone.mFbxNode = inNode;
 	mSkeleton.mBones.push_back(currBone);
 
 	/*
@@ -516,12 +503,54 @@ void FBXExporter::ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVerte
 	}
 }
 
+void FBXExporter::AssociateBonesWithVertices()
+{
+	// I will definitely rewrite this function...............................
+	for (auto itr = mBoneInfoLookup.begin(); itr != mBoneInfoLookup.end(); ++itr)
+	{
+		for(unsigned int i = 0; i < itr->second.mBlendingInfo.size(); ++i)
+		{
+			for(unsigned int j = 0; j < mVertices.size(); ++j)
+			{
+				if (mVertices[j].mCtrlpointIndex == itr->second.mBlendingInfo[i].mCtrlPointIndex)
+				{
+					for(unsigned int k = 0; k < mSkeleton.mBones.size(); ++k)
+					{
+						if (mSkeleton.mBones[k].mName == itr->second.mClusterLink->GetName())
+						{
+							VertexBlendingInfo currBlendingInfo;
+							currBlendingInfo.mBlendingIndex = k;
+							currBlendingInfo.mBlendingWeight = static_cast<float>(itr->second.mBlendingInfo[i].mWeight);
+							mVertices[j].mVertexBlendingInfos.push_back(currBlendingInfo);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+
+	for (unsigned int i = 0; i < mVertices.size(); ++i)
+	{
+		if (mVertices[i].mVertexBlendingInfos.size() < 4)
+		{
+			VertexBlendingInfo currBlendingInfo;
+			for (unsigned int j = 4 - mVertices[i].mVertexBlendingInfos.size(); j > 0; --j)
+			{
+				mVertices[i].mVertexBlendingInfos.push_back(currBlendingInfo);
+			}
+		}
+	}
+}
+
 void FBXExporter::CleanupFbxManager()
 {
 	mFBXScene->Destroy();
 	mFBXManager->Destroy();
 }
 
+/*
 void FBXExporter::ReduceVertices()
 {
 	CleanupFbxManager();
@@ -542,13 +571,15 @@ void FBXExporter::ReduceVertices()
 
 	mVertices = newVertices;
 }
+*/
 
-void FBXExporter::WriteSceneToStream(std::ostream& inStream)
+void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 {
 	inStream << "<?xml version='1.0' encoding='UTF-8' ?>" << std::endl;
 	inStream << "<itpmesh>" << std::endl;
-	inStream << "\t<format>pnt</format>" << std::endl;
-	inStream << "\t<texture>skybreaker_diff.tga</texture>" << std::endl;
+	inStream << "<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
+	inStream << "\t<format>pnst</format>" << std::endl;
+	inStream << "\t<texture>Blaze.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
@@ -563,6 +594,8 @@ void FBXExporter::WriteSceneToStream(std::ostream& inStream)
 		inStream << "\t\t<vtx>" << std::endl;
 		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << -mVertices[i].mPosition.z << "</pos>" << std::endl;
 		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
+		inStream << "\t\t\t<sw>" << mVertices[i].mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
+		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
 		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
 		inStream << "\t\t</vtx>" << std::endl;
 	}
@@ -570,6 +603,15 @@ void FBXExporter::WriteSceneToStream(std::ostream& inStream)
 	inStream << "</itpmesh>" << std::endl;
 }
 
+void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
+{
+	inStream << "<?xml version='1.0' encoding='UTF-8' ?>" << std::endl;
+	inStream << "<itpanim>" << std::endl;
+	inStream << "\t<skeleton count='" << mSkeleton.mBones.size() << "'>" <<std::endl;
+
+}
+
+/*
 void FBXExporter::AssembleVertices()
 {
 	for (unsigned int i = 0; i < mTriangleCount * 3; ++i)
@@ -604,6 +646,7 @@ int FBXExporter::FindVertex(const Vertex::PNTVertex& inTarget, const std::vector
 
 	return index;
 }
+*/
 
 FbxAMatrix FBXExporter::GetGeometryTransformation(FbxNode* inNode)
 {
@@ -653,4 +696,24 @@ void FBXExporter::PrintMatrix(FbxMatrix& inMatrix)
 	}
 
 	cout << lMatrixValue.Buffer();
+}
+
+void FBXExporter::PrintVertexBlendingInfo()
+{
+	for(unsigned int i = 0; i < mVertices.size(); ++i)
+	{
+		cout<<"Vertex: "<<i<<"\n";
+		for (unsigned int j = 0; j < mVertices[i].mVertexBlendingInfos.size(); ++j)
+		{
+			cout << "Info# " << j + 1 << ": " << "Index: " << mVertices[i].mVertexBlendingInfos[j].mBlendingIndex << " Weight: " << mVertices[i].mVertexBlendingInfos[j].mBlendingWeight;
+			cout<<"\n";
+		}
+
+		cout<<"\n\n";
+	}
+}
+
+void FBXExporter::ConvertAndOutputMatrix(std::ostream& inStream, FbxAMatrix& inMatrix)
+{
+	
 }

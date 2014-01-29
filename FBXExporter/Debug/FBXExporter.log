@@ -1,4 +1,4 @@
-﻿Build started 1/26/2014 11:29:50 PM.
+﻿Build started 1/28/2014 10:56:51 PM.
      1>Project "H:\Academic\C++\FBXExporter\FBXExporter\FBXExporter.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I.\FBXSDK\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt FBXExporter.cpp
@@ -15,4 +15,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.78
+Time Elapsed 00:00:03.14

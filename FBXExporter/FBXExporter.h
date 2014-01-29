@@ -5,20 +5,50 @@
 #include <unordered_map>
 #include "Vertex.h"
 
+struct CtrlpointWeightPair
+{
+	unsigned mCtrlPointIndex;
+	double mWeight;
+};
+
+struct Keyframe
+{
+	FbxLongLong mFrameNum;
+	FbxAMatrix mLocalTransform;
+	Keyframe* mNext;
+
+	Keyframe() :
+		mNext(nullptr)
+	{}
+};
+
+struct BoneInfoContainer
+{
+	FbxAMatrix mBindpose;
+	vector<CtrlpointWeightPair> mBlendingInfo;
+	FbxNode* mClusterLink;
+	Keyframe* mAnimation;
+	
+	BoneInfoContainer():
+		mClusterLink(nullptr),
+		mAnimation(nullptr)
+	{}
+};
+
 struct Bone
 {
 	string mName;
 	int mParentIndex;
 	FbxAMatrix mBindPose;
-	FbxNode* mFbxNode;
-	FbxCluster* mCluster;
+	Keyframe* mAnimation;
+	FbxNode* mNode;
 
-	Bone()
+	Bone():
+		mNode(nullptr),
+		mAnimation(nullptr)
 	{
 		mBindPose.SetIdentity();
 		mParentIndex = -1;
-		mFbxNode = nullptr;
-		mCluster = nullptr;
 	}
 };
 
@@ -44,9 +74,11 @@ public:
 	void ReadNormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, XMFLOAT3& outNormal);
 	void ReadBinormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, XMFLOAT3& outBinormal);
 	void ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, XMFLOAT3& outTangent);
+	void AssociateBonesWithVertices();
 	void CleanupFbxManager();
-	void ReduceVertices();
-	void WriteSceneToStream(std::ostream& inStream);
+	
+	void WriteMeshToStream(std::ostream& inStream);
+	void WriteAnimationToStream(std::ostream& inStream);
 	void ExportFBX();
 
 private:
@@ -60,15 +92,18 @@ private:
 	bool mAllByControlPoint;
 	unsigned int* mIndexBuffer;
 	unsigned int mTriangleCount;
-	std::vector<Vertex::PNTVertex> mVertices;
+	std::vector<Vertex::PNTIWVertex> mVertices;
 	Skeleton mSkeleton;
-	unordered_map<string, FbxAMatrix> mBindposeLookup;
+	unordered_map<string, BoneInfoContainer> mBoneInfoLookup;
 
 private:
-	void AssembleVertices();
-	int FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices);
+	//void AssembleVertices();
+	//int FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices);
+	//void ReduceVertices();
+	void PrintVertexBlendingInfo();
 	FbxAMatrix GetGeometryTransformation(FbxNode* inNode);
 	void TestGeometryTrans(FbxNode* inNode);
+	void ConvertAndOutputMatrix(std::ostream& inStream, FbxAMatrix& inMatrix);
 	void PrintMatrix(FbxAMatrix& inMatrix);
 	void PrintMatrix(FbxMatrix& inMatrix);
 
