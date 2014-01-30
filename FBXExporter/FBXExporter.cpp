@@ -639,11 +639,11 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 			inStream << "\t\t\t\t\t";
 			if(true)//if(i == 0)
 			{
-				WriteMatrix(inStream, walker->mLocalTransform, true);
+				WriteMatrix(inStream, walker->mLocalTransform.Transpose(), true);
 			}
 			else
 			{
-				WriteMatrix(inStream, walker->mLocalTransform, false);
+				WriteMatrix(inStream, walker->mLocalTransform.Transpose(), false);
 			}
 			inStream << "\t\t\t\t" << "</frame>\n";
 			walker = walker->mNext;
