@@ -95,6 +95,8 @@ private:
 	std::vector<Vertex::PNTIWVertex> mVertices;
 	Skeleton mSkeleton;
 	unordered_map<string, BoneInfoContainer> mBoneInfoLookup;
+	FbxLongLong mAnimationLength;
+	string mAnimationName;
 
 private:
 	//void AssembleVertices();

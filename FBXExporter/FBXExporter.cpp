@@ -1,6 +1,7 @@
 #include "FBXExporter.h"
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 using namespace Vertex;
 
@@ -62,12 +63,10 @@ void FBXExporter::ExportFBX()
 	ProcessSkeletonHierarchy(mFBXScene->GetRootNode());
 	ProcessGeometry(mFBXScene->GetRootNode());
 	AssociateBonesWithVertices();
-	//PrintVertexBlendingInfo();
-	//AssembleVertices();
-	//ReduceVertices();
-	//std::ofstream myfile(".\\exportedModels\\skybreakerIdle.itpmesh");
-	//WriteSceneToStream(myfile);
-	WriteAnimationToStream(std::cout);
+	std::ofstream meshOutput(".\\exportedModels\\skybreakerAttack_test.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\skybreakerAttack_test.itpanim");
+	WriteMeshToStream(meshOutput);
+	WriteAnimationToStream(animOutput);
 	std::cout << "\n\nExport Done!\n";
 }
 
@@ -160,7 +159,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 			FbxAMatrix localBindposeMatrix;
 			currCluster->GetTransformMatrix(transformMatrix);
 			currCluster->GetTransformLinkMatrix(transformLinkMatrix);
-			localBindposeMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
+			localBindposeMatrix = transformLinkMatrix;/*.Inverse() * transformMatrix * geometryTransform;*/
 
 			BoneInfoContainer currBoneInfo;
 			currBoneInfo.mClusterLink = currCluster->GetLink();
@@ -178,9 +177,11 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 			// Now only supports one take
 			FbxAnimStack* currAnimStack = mFBXScene->GetSrcObject<FbxAnimStack>(0);
 			FbxString animStackName = currAnimStack->GetName();
+			mAnimationName = animStackName.Buffer();
 			FbxTakeInfo* takeInfo = mFBXScene->GetTakeInfo(animStackName);
 			FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
 			FbxTime end = takeInfo->mLocalTimeSpan.GetStop();
+			mAnimationLength = end.GetFrameCount(FbxTime::eFrames24) - start.GetFrameCount(FbxTime::eFrames24) + 1;
 			Keyframe** currAnim = &currBoneInfo.mAnimation;
 
 			for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i <= end.GetFrameCount(FbxTime::eFrames24); ++i)
@@ -189,7 +190,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 				currTime.SetFrame(i, FbxTime::eFrames24);
 				*currAnim = new Keyframe();
 				(*currAnim)->mFrameNum = i;
-				(*currAnim)->mLocalTransform = currCluster->GetLink()->EvaluateLocalTransform(currTime);
+				(*currAnim)->mLocalTransform = currCluster->GetLink()->EvaluateGlobalTransform(currTime);
 				currAnim = &((*currAnim)->mNext);
 			}
 
@@ -578,9 +579,9 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 {
 	inStream << "<?xml version='1.0' encoding='UTF-8' ?>" << std::endl;
 	inStream << "<itpmesh>" << std::endl;
-	inStream << "<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
+	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>Blaze.tga</texture>" << std::endl;
+	inStream << "\t<texture>skybreaker_diff.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
@@ -612,8 +613,8 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	for(unsigned int i = 0; i < mSkeleton.mBones.size(); ++i)
 	{
 		inStream << "\t\t<joint id='" << i << "' name='" << mSkeleton.mBones[i].mName << "' parent='" << mSkeleton.mBones[i].mParentIndex <<"'>\n";
-		inStream << "\t\t\t\n";
-		if(i == 0)
+		inStream << "\t\t\t";
+		if(false)//if(i == 0)
 		{
 			WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose.Transpose(), true);
 		}
@@ -623,7 +624,33 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 		}
 		inStream << "\t\t</joint>\n";
 	}
-	inStream << "\t</skeleton>";
+	inStream << "\t</skeleton>\n";
+	inStream << "\t<animations>\n";
+	inStream << "\t\t<animation name='" << mAnimationName << "' length='" << mAnimationLength << "'>\n";
+	for(unsigned int i = 0; i < mSkeleton.mBones.size(); ++i)
+	{
+		inStream << "\t\t\t" << "<track id = '" << i << "' name='" << mSkeleton.mBones[i].mName << "'>\n";
+		Keyframe* walker = mSkeleton.mBones[i].mAnimation;
+		while(walker)
+		{
+			inStream << "\t\t\t\t" << "<frame num='" << walker->mFrameNum - 1 << "'>\n";
+			inStream << "\t\t\t\t\t";
+			if(false)//if(i == 0)
+			{
+				WriteMatrix(inStream, walker->mLocalTransform, true);
+			}
+			else
+			{
+				WriteMatrix(inStream, walker->mLocalTransform, false);
+			}
+			inStream << "\t\t\t\t" << "</frame>\n";
+			walker = walker->mNext;
+		}
+		inStream << "\t\t\t" << "</track>\n";
+	}
+	inStream << "\t\t</animation>\n";
+	inStream << "</animations>\n";
+	inStream << "</itpanim>";
 }
 
 /*
@@ -730,7 +757,7 @@ void FBXExporter::PrintVertexBlendingInfo()
 
 void FBXExporter::WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool inIsRoot)
 {
-	if(!inIsRoot)
+	if(true)
 	{
 		inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << "," 
 		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << "," 
