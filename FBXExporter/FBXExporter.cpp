@@ -67,6 +67,7 @@ void FBXExporter::ExportFBX()
 	//ReduceVertices();
 	//std::ofstream myfile(".\\exportedModels\\skybreakerIdle.itpmesh");
 	//WriteSceneToStream(myfile);
+	WriteAnimationToStream(std::cout);
 	std::cout << "\n\nExport Done!\n";
 }
 
@@ -608,7 +609,21 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	inStream << "<?xml version='1.0' encoding='UTF-8' ?>" << std::endl;
 	inStream << "<itpanim>" << std::endl;
 	inStream << "\t<skeleton count='" << mSkeleton.mBones.size() << "'>" <<std::endl;
-
+	for(unsigned int i = 0; i < mSkeleton.mBones.size(); ++i)
+	{
+		inStream << "\t\t<joint id='" << i << "' name='" << mSkeleton.mBones[i].mName << "' parent='" << mSkeleton.mBones[i].mParentIndex <<"'>\n";
+		inStream << "\t\t\t\n";
+		if(i == 0)
+		{
+			WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose.Transpose(), true);
+		}
+		else
+		{
+			WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose.Transpose(), false);
+		}
+		inStream << "\t\t</joint>\n";
+	}
+	inStream << "\t</skeleton>";
 }
 
 /*
@@ -713,7 +728,20 @@ void FBXExporter::PrintVertexBlendingInfo()
 	}
 }
 
-void FBXExporter::ConvertAndOutputMatrix(std::ostream& inStream, FbxAMatrix& inMatrix)
+void FBXExporter::WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool inIsRoot)
 {
-	
+	if(!inIsRoot)
+	{
+		inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+	}
+	else
+	{
+		inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << "," 
+		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+	}
 }

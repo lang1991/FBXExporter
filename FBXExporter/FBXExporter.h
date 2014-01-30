@@ -103,7 +103,7 @@ private:
 	void PrintVertexBlendingInfo();
 	FbxAMatrix GetGeometryTransformation(FbxNode* inNode);
 	void TestGeometryTrans(FbxNode* inNode);
-	void ConvertAndOutputMatrix(std::ostream& inStream, FbxAMatrix& inMatrix);
+	void WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool inIsRoot);
 	void PrintMatrix(FbxAMatrix& inMatrix);
 	void PrintMatrix(FbxMatrix& inMatrix);
 
