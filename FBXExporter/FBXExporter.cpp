@@ -159,7 +159,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 			FbxAMatrix localBindposeMatrix;
 			currCluster->GetTransformMatrix(transformMatrix);
 			currCluster->GetTransformLinkMatrix(transformLinkMatrix);
-			localBindposeMatrix = transformLinkMatrix;/*.Inverse() * transformMatrix * geometryTransform;*/
+			localBindposeMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
 
 			BoneInfoContainer currBoneInfo;
 			currBoneInfo.mClusterLink = currCluster->GetLink();
@@ -190,7 +190,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 				currTime.SetFrame(i, FbxTime::eFrames24);
 				*currAnim = new Keyframe();
 				(*currAnim)->mFrameNum = i;
-				(*currAnim)->mLocalTransform = currCluster->GetLink()->EvaluateGlobalTransform(currTime);
+				(*currAnim)->mLocalTransform = geometryTransform.Inverse() * currCluster->GetLink()->EvaluateGlobalTransform(currTime);
 				currAnim = &((*currAnim)->mNext);
 			}
 
@@ -586,8 +586,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
 		// We need to change the culling order
-		//inStream << "\t\t<tri>" << mIndexBuffer[i * 3] << "," << mIndexBuffer[i * 3 + 2] << "," << mIndexBuffer[i * 3 + 1] << "</tri>" << std::endl;
-		inStream << "\t\t<tri>" << mIndexBuffer[i * 3 + 2] << "," << mIndexBuffer[i * 3 + 1] << "," << mIndexBuffer[i * 3] << "</tri>" << std::endl;
+		inStream << "\t\t<tri>" << mIndexBuffer[i * 3] << "," << mIndexBuffer[i * 3 + 2] << "," << mIndexBuffer[i * 3 + 1] << "</tri>" << std::endl;
 	}
 	inStream << "\t</triangles>" << std::endl;
 
@@ -599,8 +598,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
 		inStream << "\t\t\t<sw>" << mVertices[i].mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
 		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
-		//inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
-		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << -1.0f * mVertices[i].mUV.y << "</tex>" << std::endl;
+		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
 		inStream << "\t\t</vtx>" << std::endl;
 	}
 	inStream << "\t</vertices>" << std::endl;
@@ -616,14 +614,7 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	{
 		inStream << "\t\t<joint id='" << i << "' name='" << mSkeleton.mBones[i].mName << "' parent='" << mSkeleton.mBones[i].mParentIndex <<"'>\n";
 		inStream << "\t\t\t";
-		if(true)//if(i == 0)
-		{
-			WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose.Transpose(), true);
-		}
-		else
-		{
-			WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose.Transpose(), false);
-		}
+		WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose, true);
 		inStream << "\t\t</joint>\n";
 	}
 	inStream << "\t</skeleton>\n";
@@ -637,14 +628,7 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 		{
 			inStream << "\t\t\t\t" << "<frame num='" << walker->mFrameNum - 1 << "'>\n";
 			inStream << "\t\t\t\t\t";
-			if(true)//if(i == 0)
-			{
-				WriteMatrix(inStream, walker->mLocalTransform.Transpose(), true);
-			}
-			else
-			{
-				WriteMatrix(inStream, walker->mLocalTransform.Transpose(), false);
-			}
+			WriteMatrix(inStream, walker->mLocalTransform, true);
 			inStream << "\t\t\t\t" << "</frame>\n";
 			walker = walker->mNext;
 		}
@@ -759,6 +743,11 @@ void FBXExporter::PrintVertexBlendingInfo()
 
 void FBXExporter::WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool inIsRoot)
 {
+	inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+	/*
 	if(!inIsRoot)
 	{
 		inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << "," 
@@ -773,4 +762,5 @@ void FBXExporter::WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool
 		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << "," 
 		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
 	}
+	*/
 }
