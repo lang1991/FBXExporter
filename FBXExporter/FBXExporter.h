@@ -14,7 +14,7 @@ struct CtrlpointWeightPair
 struct Keyframe
 {
 	FbxLongLong mFrameNum;
-	FbxAMatrix mLocalTransform;
+	FbxMatrix mLocalTransform;
 	Keyframe* mNext;
 
 	Keyframe() :
@@ -24,7 +24,7 @@ struct Keyframe
 
 struct BoneInfoContainer
 {
-	FbxAMatrix mBindpose;
+	FbxMatrix mBindpose;
 	vector<CtrlpointWeightPair> mBlendingInfo;
 	FbxNode* mClusterLink;
 	Keyframe* mAnimation;
@@ -39,7 +39,7 @@ struct Bone
 {
 	string mName;
 	int mParentIndex;
-	FbxAMatrix mBindPose;
+	FbxMatrix mBindPose;
 	Keyframe* mAnimation;
 	FbxNode* mNode;
 
@@ -106,6 +106,7 @@ private:
 	FbxAMatrix GetGeometryTransformation(FbxNode* inNode);
 	void TestGeometryTrans(FbxNode* inNode);
 	void WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool inIsRoot);
+	void WriteMatrix(std::ostream& inStream, FbxMatrix& inMatrix, bool inIsRoot);
 	void PrintMatrix(FbxAMatrix& inMatrix);
 	void PrintMatrix(FbxMatrix& inMatrix);
 
