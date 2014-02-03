@@ -63,8 +63,8 @@ void FBXExporter::ExportFBX()
 	ProcessSkeletonHierarchy(mFBXScene->GetRootNode());
 	ProcessGeometry(mFBXScene->GetRootNode());
 	AssociateBonesWithVertices();
-	std::ofstream meshOutput(".\\exportedModels\\simple2.itpmesh");
-	std::ofstream animOutput(".\\exportedModels\\simple2.itpanim");
+	std::ofstream meshOutput(".\\exportedModels\\commander.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\commander.itpanim");
 	WriteMeshToStream(meshOutput);
 	WriteAnimationToStream(animOutput);
 	std::cout << "\n\nExport Done!\n";
@@ -157,6 +157,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 			FbxAMatrix transformMatrix;						// The transformation of the mesh at binding time
 			FbxAMatrix transformLinkMatrix;					// The transformation of the cluster(joint) at binding time from joint space to world space
 			FbxAMatrix localBindposeMatrix;
+
 			currCluster->GetTransformMatrix(transformMatrix);
 			currCluster->GetTransformLinkMatrix(transformLinkMatrix);
 			localBindposeMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
@@ -190,7 +191,8 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 				currTime.SetFrame(i, FbxTime::eFrames24);
 				*currAnim = new Keyframe();
 				(*currAnim)->mFrameNum = i;
-				(*currAnim)->mLocalTransform = geometryTransform.Inverse() * currCluster->GetLink()->EvaluateGlobalTransform(currTime);
+				FbxMatrix currentTransformOffset = inNode->EvaluateGlobalTransform(currTime) * geometryTransform;
+				(*currAnim)->mLocalTransform = currentTransformOffset.Inverse() * currCluster->GetLink()->EvaluateGlobalTransform(currTime);
 				currAnim = &((*currAnim)->mNext);
 			}
 
@@ -581,7 +583,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>simple2.jpg</texture>" << std::endl;
+	inStream << "\t<texture>tinkermeisterArtificer_DIFF.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
@@ -594,8 +596,8 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	for (unsigned int i = 0; i < mVertices.size(); ++i)
 	{
 		inStream << "\t\t<vtx>" << std::endl;
-		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << -mVertices[i].mPosition.z << "</pos>" << std::endl;
-		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
+		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << mVertices[i].mPosition.z << "</pos>" << std::endl;
+		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << mVertices[i].mNormal.z << "</norm>" << std::endl;
 		inStream << "\t\t\t<sw>" << mVertices[i].mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
 		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
 		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
@@ -614,7 +616,8 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	{
 		inStream << "\t\t<joint id='" << i << "' name='" << mSkeleton.mBones[i].mName << "' parent='" << mSkeleton.mBones[i].mParentIndex <<"'>\n";
 		inStream << "\t\t\t";
-		WriteMatrix(inStream, mSkeleton.mBones[i].mBindPose, true);
+		FbxMatrix out = mSkeleton.mBones[i].mBindPose;
+		WriteMatrix(inStream, out.Transpose(), true);
 		inStream << "\t\t</joint>\n";
 	}
 	inStream << "\t</skeleton>\n";
@@ -628,7 +631,8 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 		{
 			inStream << "\t\t\t\t" << "<frame num='" << walker->mFrameNum - 1 << "'>\n";
 			inStream << "\t\t\t\t\t";
-			WriteMatrix(inStream, walker->mLocalTransform, true);
+			FbxMatrix out = walker->mLocalTransform;
+			WriteMatrix(inStream, out.Transpose(), true);
 			inStream << "\t\t\t\t" << "</frame>\n";
 			walker = walker->mNext;
 		}
@@ -761,6 +765,36 @@ void FBXExporter::WriteMatrix(std::ostream& inStream, FbxAMatrix& inMatrix, bool
 		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << "," 
 		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << "," 
 		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+	}
+	*/
+}
+
+void FBXExporter::WriteMatrix(std::ostream& inStream, FbxMatrix& inMatrix, bool inIsRoot)
+{
+	//inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << ","
+	//	<< static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << ","
+	//	<< static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(2, 2)) << "," << static_cast<float>(-inMatrix.Get(2, 3)) << ","
+	//	<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+
+	inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << ","
+		<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+
+	/*
+	if(!inIsRoot)
+	{
+	inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
+	}
+	else
+	{
+	inStream << "<mat>" << static_cast<float>(inMatrix.Get(0, 0)) << "," << static_cast<float>(inMatrix.Get(0, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(0, 2)) << "," << static_cast<float>(inMatrix.Get(0, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(1, 0)) << "," << static_cast<float>(inMatrix.Get(1, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(1, 2)) << "," << static_cast<float>(inMatrix.Get(1, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(2, 0)) << "," << static_cast<float>(inMatrix.Get(2, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(2, 2)) << "," << static_cast<float>(inMatrix.Get(2, 3)) << ","
+	<< static_cast<float>(inMatrix.Get(3, 0)) << "," << static_cast<float>(inMatrix.Get(3, 1)) << "," << static_cast<float>(-1 * inMatrix.Get(3, 2)) << "," << static_cast<float>(inMatrix.Get(3, 3)) << "</mat>\n";
 	}
 	*/
 }
