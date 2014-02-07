@@ -63,8 +63,8 @@ void FBXExporter::ExportFBX()
 	ProcessSkeletonHierarchy(mFBXScene->GetRootNode());
 	ProcessGeometry(mFBXScene->GetRootNode());
 	AssociateBonesWithVertices();
-	std::ofstream meshOutput(".\\exportedModels\\commander.itpmesh");
-	std::ofstream animOutput(".\\exportedModels\\commander.itpanim");
+	std::ofstream meshOutput(".\\exportedModels\\droplet.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\droplet.itpanim");
 	WriteMeshToStream(meshOutput);
 	WriteAnimationToStream(animOutput);
 	std::cout << "\n\nExport Done!\n";
@@ -191,7 +191,7 @@ void FBXExporter::ProcessBones(FbxNode* inNode)
 				currTime.SetFrame(i, FbxTime::eFrames24);
 				*currAnim = new Keyframe();
 				(*currAnim)->mFrameNum = i;
-				FbxMatrix currentTransformOffset = inNode->EvaluateGlobalTransform(currTime) * geometryTransform;
+				FbxAMatrix currentTransformOffset = inNode->EvaluateGlobalTransform(currTime) * geometryTransform;
 				(*currAnim)->mLocalTransform = currentTransformOffset.Inverse() * currCluster->GetLink()->EvaluateGlobalTransform(currTime);
 				currAnim = &((*currAnim)->mNext);
 			}
@@ -583,7 +583,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>tinkermeisterArtificer_DIFF.tga</texture>" << std::endl;
+	inStream << "\t<texture>tenshii_DIFF.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
@@ -596,8 +596,8 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	for (unsigned int i = 0; i < mVertices.size(); ++i)
 	{
 		inStream << "\t\t<vtx>" << std::endl;
-		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << mVertices[i].mPosition.z << "</pos>" << std::endl;
-		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << mVertices[i].mNormal.z << "</norm>" << std::endl;
+		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << -mVertices[i].mPosition.z << "</pos>" << std::endl;
+		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
 		inStream << "\t\t\t<sw>" << mVertices[i].mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
 		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
 		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
@@ -616,7 +616,14 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	{
 		inStream << "\t\t<joint id='" << i << "' name='" << mSkeleton.mBones[i].mName << "' parent='" << mSkeleton.mBones[i].mParentIndex <<"'>\n";
 		inStream << "\t\t\t";
+		FbxVector4 translation = mSkeleton.mBones[i].mBindPose.GetT();
+		FbxVector4 rotation = mSkeleton.mBones[i].mBindPose.GetR();
+		translation.Set(translation.mData[0], translation.mData[1], -translation.mData[2]);
+		rotation.Set(-rotation.mData[0], -rotation.mData[1], rotation.mData[2]);
+		mSkeleton.mBones[i].mBindPose.SetT(translation);
+		mSkeleton.mBones[i].mBindPose.SetR(rotation);
 		FbxMatrix out = mSkeleton.mBones[i].mBindPose;
+
 		WriteMatrix(inStream, out.Transpose(), true);
 		inStream << "\t\t</joint>\n";
 	}
@@ -631,6 +638,12 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 		{
 			inStream << "\t\t\t\t" << "<frame num='" << walker->mFrameNum - 1 << "'>\n";
 			inStream << "\t\t\t\t\t";
+			FbxVector4 translation = walker->mLocalTransform.GetT();
+			FbxVector4 rotation = walker->mLocalTransform.GetR();
+			translation.Set(translation.mData[0], translation.mData[1], -translation.mData[2]);
+			rotation.Set(-rotation.mData[0], -rotation.mData[1], rotation.mData[2]);
+			walker->mLocalTransform.SetT(translation);
+			walker->mLocalTransform.SetR(rotation);
 			FbxMatrix out = walker->mLocalTransform;
 			WriteMatrix(inStream, out.Transpose(), true);
 			inStream << "\t\t\t\t" << "</frame>\n";

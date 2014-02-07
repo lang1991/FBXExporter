@@ -14,7 +14,7 @@ struct CtrlpointWeightPair
 struct Keyframe
 {
 	FbxLongLong mFrameNum;
-	FbxMatrix mLocalTransform;
+	FbxAMatrix mLocalTransform;
 	Keyframe* mNext;
 
 	Keyframe() :
@@ -24,7 +24,7 @@ struct Keyframe
 
 struct BoneInfoContainer
 {
-	FbxMatrix mBindpose;
+	FbxAMatrix mBindpose;
 	vector<CtrlpointWeightPair> mBlendingInfo;
 	FbxNode* mClusterLink;
 	Keyframe* mAnimation;
@@ -39,7 +39,7 @@ struct Bone
 {
 	string mName;
 	int mParentIndex;
-	FbxMatrix mBindPose;
+	FbxAMatrix mBindPose;
 	Keyframe* mAnimation;
 	FbxNode* mNode;
 
