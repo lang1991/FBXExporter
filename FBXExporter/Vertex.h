@@ -3,47 +3,54 @@
 #include <stdint.h>
 #include <xnamath.h>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
-namespace Vertex
+struct PNTVertex
 {
-	struct PNTVertex
+	XMFLOAT3 mPosition;
+	XMFLOAT3 mNormal;
+	XMFLOAT2 mUV;
+
+	bool operator==(const PNTVertex& rhs) const
 	{
-		XMFLOAT3 mPosition;
-		XMFLOAT3 mNormal;
-		XMFLOAT2 mUV;
+		uint32_t position;
+		uint32_t normal;
+		uint32_t uv;
 
-		bool operator==(const PNTVertex& rhs) const
-		{
-			uint32_t position;
-			uint32_t normal;
-			uint32_t uv;
+		XMVectorEqualR(&position, XMLoadFloat3(&(this->mPosition)), XMLoadFloat3(&rhs.mPosition));
+		XMVectorEqualR(&normal, XMLoadFloat3(&(this->mNormal)), XMLoadFloat3(&rhs.mNormal));
+		XMVectorEqualR(&uv, XMLoadFloat2(&(this->mUV)), XMLoadFloat2(&rhs.mUV));
 
-			XMVectorEqualR(&position, XMLoadFloat3(&(this->mPosition)), XMLoadFloat3(&rhs.mPosition));
-			XMVectorEqualR(&normal, XMLoadFloat3(&(this->mNormal)), XMLoadFloat3(&rhs.mNormal));
-			XMVectorEqualR(&uv, XMLoadFloat2(&(this->mUV)), XMLoadFloat2(&rhs.mUV));
+		return XMComparisonAllTrue(position) && XMComparisonAllTrue(normal) && XMComparisonAllTrue(uv);
+	}
+};
 
-			return XMComparisonAllTrue(position) && XMComparisonAllTrue(normal) && XMComparisonAllTrue(uv);
-		}
-	};
+struct VertexBlendingInfo
+{
+	unsigned int mBlendingIndex;
+	double mBlendingWeight;
 
-	struct VertexBlendingInfo
+	VertexBlendingInfo():
+		mBlendingIndex(0),
+		mBlendingWeight(0.0)
+	{}
+};
+
+struct PNTIWVertex
+{
+	XMFLOAT3 mPosition;
+	XMFLOAT3 mNormal;
+	XMFLOAT2 mUV;
+	vector<VertexBlendingInfo> mVertexBlendingInfos;
+
+	bool CompareBlendingInfos(const VertexBlendingInfo& info1, const VertexBlendingInfo& info2)
 	{
-		unsigned int mBlendingIndex;
-		float mBlendingWeight;
+		return (info1.mBlendingWeight < info2.mBlendingWeight);
+	}
 
-		VertexBlendingInfo():
-			mBlendingIndex(0),
-			mBlendingWeight(0.0f)
-		{}
-	};
-
-	struct PNTIWVertex
+	void SortBlendingInfoByWeight()
 	{
-		XMFLOAT3 mPosition;
-		XMFLOAT3 mNormal;
-		XMFLOAT2 mUV;
-		int mCtrlpointIndex;
-		vector<VertexBlendingInfo> mVertexBlendingInfos;
-	};
-}
+		sort(mVertexBlendingInfos.begin(), mVertexBlendingInfos.end(), CompareBlendingInfos);
+	}
+};
