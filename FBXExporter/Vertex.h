@@ -4,6 +4,7 @@
 #include <xnamath.h>
 #include <vector>
 #include <algorithm>
+#include "Utilities.h"
 using namespace std;
 
 struct PNTVertex
@@ -52,5 +53,27 @@ struct PNTIWVertex
 	void SortBlendingInfoByWeight()
 	{
 		sort(mVertexBlendingInfos.begin(), mVertexBlendingInfos.end(), CompareBlendingInfos);
+	}
+
+	bool operator==(const PNTIWVertex& rhs) const
+	{
+		bool sameBlendingInfo = true;
+
+		// Each vertex should only have 4 index-weight blending info pairs
+		for(unsigned int i = 0; i < 4; ++i)
+		{
+			if(mVertexBlendingInfos[i].mBlendingIndex != rhs.mVertexBlendingInfos[i].mBlendingIndex ||
+				abs(mVertexBlendingInfos[i].mBlendingWeight - rhs.mVertexBlendingInfos[i].mBlendingWeight) > 0.001)
+			{
+				sameBlendingInfo = false;
+				break;
+			}
+		}
+
+
+		return Utilities::CompareVector3WithEpsilon(mPosition, rhs.mPosition) && 
+			Utilities::CompareVector3WithEpsilon(mNormal, rhs.mNormal) &&
+			Utilities::CompareVector2WithEpsilon(mUV, rhs.mUV) &&
+			sameBlendingInfo;
 	}
 };

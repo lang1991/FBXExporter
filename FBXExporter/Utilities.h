@@ -85,6 +85,13 @@ struct Triangle
 class Utilities
 {
 public:
+
+	static const XMFLOAT3 vector3Epsilon;
+	static const XMFLOAT2 vector2Epsilon;
+	static const XMFLOAT3 vector3True;
+	static const XMFLOAT2 vector2True;
+
+
 	// This function should be changed if exporting to another format
 	static void WriteMatrix(std::ostream& inStream, FbxMatrix& inMatrix, bool inIsRoot)
 	{
@@ -121,5 +128,21 @@ public:
 		const FbxVector4 lS = inNode->GetGeometricScaling(FbxNode::eSourcePivot);
 
 		return FbxAMatrix(lT, lR, lS);
+	}
+
+	static bool CompareVector3WithEpsilon(const XMFLOAT3& lhs, const XMFLOAT3& rhs)
+	{
+		uint32_t result;
+
+		XMVectorEqualR(&result, XMVectorNearEqual(XMLoadFloat3(&lhs), XMLoadFloat3(&rhs), XMLoadFloat3(&vector3Epsilon)), XMLoadFloat3(&vector3True));
+		return XMComparisonAllTrue(result);
+	}
+
+	static bool CompareVector2WithEpsilon(const XMFLOAT2& lhs, const XMFLOAT2& rhs)
+	{
+		uint32_t result;
+
+		XMVectorEqualR(&result, XMVectorNearEqual(XMLoadFloat2(&lhs), XMLoadFloat2(&rhs), XMLoadFloat2(&vector2Epsilon)), XMLoadFloat2(&vector2True));
+		return XMComparisonAllTrue(result);
 	}
 };
