@@ -7,38 +7,38 @@
 class Material
 {
 public:
-	string mName;
+	std::string mName;
 	XMFLOAT3 mAmbient;
 	XMFLOAT3 mDiffuse;
 	XMFLOAT3 mEmissive;
 	double mTransparencyFactor;
-	string mDiffuseMapName;
-	string mEmissiveMapName;
-	string mGlossMapName;
-	string mNormalMapName;
-	string mSpecularMapName;
+	std::string mDiffuseMapName;
+	std::string mEmissiveMapName;
+	std::string mGlossMapName;
+	std::string mNormalMapName;
+	std::string mSpecularMapName;
 
-	virtual void WriteToStream(ostream& inStream) = 0;
+	virtual void WriteToStream(std::ostream& inStream) = 0;
 };
 
 class LambertMaterial : public Material
 {
 public:
 
-	void WriteToStream(ostream& inStream)
+	void WriteToStream(std::ostream& inStream)
 	{
-		inStream << "Ambient: " << mAmbient.x << " " << mAmbient.y << " " << mAmbient.z << endl;
-		inStream << "Diffuse: " << mDiffuse.x << " " << mDiffuse.y << " " << mDiffuse.z << endl;
-		inStream << "Emissive: " << mEmissive.x << " " << mEmissive.y << " " << mEmissive.z << endl;
+		inStream << "Ambient: " << mAmbient.x << " " << mAmbient.y << " " << mAmbient.z << std::endl;
+		inStream << "Diffuse: " << mDiffuse.x << " " << mDiffuse.y << " " << mDiffuse.z << std::endl;
+		inStream << "Emissive: " << mEmissive.x << " " << mEmissive.y << " " << mEmissive.z << std::endl;
 
 		if (!mDiffuseMapName.empty())
 		{
-			inStream << "DiffuseMap: " << mDiffuseMapName << endl;
+			inStream << "DiffuseMap: " << mDiffuseMapName << std::endl;
 		}
 
 		if (!mNormalMapName.empty())
 		{
-			inStream << "NormalMap: " << mNormalMapName << endl;
+			inStream << "NormalMap: " << mNormalMapName << std::endl;
 		}
 	}
 };
@@ -52,23 +52,23 @@ public:
 	double mShininess;
 	double mReflectionFactor;
 
-	void WriteToStream(ostream& inStream)
+	void WriteToStream(std::ostream& inStream)
 	{
-		inStream << "Ambient: " << mAmbient.x << " " << mAmbient.y << " " << mAmbient.z << endl;
-		inStream << "Diffuse: " << mDiffuse.x << " " << mDiffuse.y << " " << mDiffuse.z << endl;
-		inStream << "Emissive: " << mEmissive.x << " " << mEmissive.y << " " << mEmissive.z << endl;
-		inStream << "Specular: " << mSpecular.x << " " << mSpecular.y << " " << mSpecular.z << endl;
-		inStream << "SpecPower: " << mSpecularPower << endl;
-		inStream << "Reflectivity: " << mReflection.x << " " << mReflection.y << " " << mReflection.z <<endl;
+		inStream << "Ambient: " << mAmbient.x << " " << mAmbient.y << " " << mAmbient.z << std::endl;
+		inStream << "Diffuse: " << mDiffuse.x << " " << mDiffuse.y << " " << mDiffuse.z << std::endl;
+		inStream << "Emissive: " << mEmissive.x << " " << mEmissive.y << " " << mEmissive.z << std::endl;
+		inStream << "Specular: " << mSpecular.x << " " << mSpecular.y << " " << mSpecular.z << std::endl;
+		inStream << "SpecPower: " << mSpecularPower << std::endl;
+		inStream << "Reflectivity: " << mReflection.x << " " << mReflection.y << " " << mReflection.z << std::endl;
 		
 		if (!mDiffuseMapName.empty())
 		{
-			inStream << "DiffuseMap: " << mDiffuseMapName << endl;
+			inStream << "DiffuseMap: " << mDiffuseMapName << std::endl;
 		}
 
 		if(!mNormalMapName.empty())
 		{
-			inStream << "NormalMap: " << mNormalMapName << endl;
+			inStream << "NormalMap: " << mNormalMapName << std::endl;
 		}
 	}
 };

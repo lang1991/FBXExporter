@@ -1,11 +1,8 @@
 #pragma once
-#include <Windows.h>
-#include <stdint.h>
-#include <xnamath.h>
+#include "MathHelper.h"
 #include <vector>
 #include <algorithm>
-#include "Utilities.h"
-using namespace std;
+
 
 struct PNTVertex
 {
@@ -36,6 +33,11 @@ struct VertexBlendingInfo
 		mBlendingIndex(0),
 		mBlendingWeight(0.0)
 	{}
+
+	bool operator < (const VertexBlendingInfo& rhs)
+	{
+		return (mBlendingWeight < rhs.mBlendingWeight);
+	}
 };
 
 struct PNTIWVertex
@@ -43,16 +45,11 @@ struct PNTIWVertex
 	XMFLOAT3 mPosition;
 	XMFLOAT3 mNormal;
 	XMFLOAT2 mUV;
-	vector<VertexBlendingInfo> mVertexBlendingInfos;
-
-	bool CompareBlendingInfos(const VertexBlendingInfo& info1, const VertexBlendingInfo& info2)
-	{
-		return (info1.mBlendingWeight < info2.mBlendingWeight);
-	}
+	std::vector<VertexBlendingInfo> mVertexBlendingInfos;
 
 	void SortBlendingInfoByWeight()
 	{
-		sort(mVertexBlendingInfos.begin(), mVertexBlendingInfos.end(), CompareBlendingInfos);
+		std::sort(mVertexBlendingInfos.begin(), mVertexBlendingInfos.end());
 	}
 
 	bool operator==(const PNTIWVertex& rhs) const
@@ -70,10 +67,9 @@ struct PNTIWVertex
 			}
 		}
 
-
-		return Utilities::CompareVector3WithEpsilon(mPosition, rhs.mPosition) && 
-			Utilities::CompareVector3WithEpsilon(mNormal, rhs.mNormal) &&
-			Utilities::CompareVector2WithEpsilon(mUV, rhs.mUV) &&
+		return MathHelper::CompareVector3WithEpsilon(mPosition, rhs.mPosition) && 
+			MathHelper::CompareVector3WithEpsilon(mNormal, rhs.mNormal) &&
+			MathHelper::CompareVector2WithEpsilon(mUV, rhs.mUV) &&
 			sameBlendingInfo;
 	}
 };

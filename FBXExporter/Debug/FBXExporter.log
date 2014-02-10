@@ -1,105 +1,26 @@
-﻿Build started 2/9/2014 1:20:48 PM.
+﻿Build started 2/9/2014 5:10:49 PM.
      1>Project "E:\Academic\Code\C++Playground\FBXExporter\FBXExporter\FBXExporter.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I.\FBXSDK\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt FBXExporter.cpp Utilities.cpp main.cpp
-         main.cpp
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C3867: 'PNTIWVertex::CompareBlendingInfos': function call missing argument list; use '&PNTIWVertex::CompareBlendingInfos' to create a pointer to member
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C2780: 'void std::sort(_RanIt,_RanIt)' : expects 2 arguments - 3 provided
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\algorithm(3639) : see declaration of 'std::sort'
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C3861: 'CompareVector2WithEpsilon': identifier not found
-         Utilities.cpp
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C3867: 'PNTIWVertex::CompareBlendingInfos': function call missing argument list; use '&PNTIWVertex::CompareBlendingInfos' to create a pointer to member
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C2780: 'void std::sort(_RanIt,_RanIt)' : expects 2 arguments - 3 provided
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\algorithm(3639) : see declaration of 'std::sort'
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C3861: 'CompareVector2WithEpsilon': identifier not found
          FBXExporter.cpp
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C3867: 'PNTIWVertex::CompareBlendingInfos': function call missing argument list; use '&PNTIWVertex::CompareBlendingInfos' to create a pointer to member
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(55): error C2780: 'void std::sort(_RanIt,_RanIt)' : expects 2 arguments - 3 provided
-                 c:\program files (x86)\microsoft visual studio 10.0\vc\include\algorithm(3639) : see declaration of 'std::sort'
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C2653: 'Utilities' : is not a class or namespace name
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(74): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(75): error C3861: 'CompareVector3WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\vertex.h(76): error C3861: 'CompareVector2WithEpsilon': identifier not found
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(244): warning C4018: '<' : signed/unsigned mismatch
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.mPosition' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.x' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.mPosition' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.y' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.mPosition' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(768): error C2228: left of '.z' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.mNormal' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.x' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.mNormal' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.y' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.mNormal' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(769): error C2228: left of '.z' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mBlendingWeight' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mBlendingWeight' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mBlendingWeight' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(770): error C2228: left of '.mBlendingWeight' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mBlendingIndex' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mBlendingIndex' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mBlendingIndex' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mVertexBlendingInfos' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(771): error C2228: left of '.mBlendingIndex' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(772): error C2228: left of '.mUV' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(772): error C2228: left of '.x' must have class/struct/union
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(772): error C2228: left of '.mUV' must have class/struct/union
-                 type is 'PNTIWVertex *'
-                 did you intend to use '->' instead?
-     1>e:\academic\code\c++playground\fbxexporter\fbxexporter\fbxexporter.cpp(772): error C2228: left of '.y' must have class/struct/union
          Generating Code...
-     1>Done Building Project "E:\Academic\Code\C++Playground\FBXExporter\FBXExporter\FBXExporter.vcxproj" (Build target(s)) -- FAILED.
+         Compiling...
+         main.cpp
+         Generating Code...
+         Skipping... (no relevant changes detected)
+         Utilities.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Academic\Code\C++Playground\FBXExporter\Debug\FBXExporter.exe" /INCREMENTAL /NOLOGO /LIBPATH:.\FBXSDK\lib\vs2010\x86\debug "libfbxsdk-md.lib" d3d11.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\FBXExporter.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"E:\Academic\Code\C++Playground\FBXExporter\Debug\FBXExporter.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\Academic\Code\C++Playground\FBXExporter\Debug\FBXExporter.lib" /MACHINE:X86 Debug\FBXExporter.exe.embed.manifest.res
+         Debug\FBXExporter.obj
+         Debug\main.obj
+         Debug\MathHelper.obj
+         Debug\Utilities.obj
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Debug\FBXExporter.exe.embed.manifest" /manifest Debug\FBXExporter.exe.intermediate.manifest
+       LinkEmbedManifest:
+         FBXExporter.vcxproj -> E:\Academic\Code\C++Playground\FBXExporter\Debug\FBXExporter.exe
+     1>Done Building Project "E:\Academic\Code\C++Playground\FBXExporter\FBXExporter\FBXExporter.vcxproj" (Build target(s)).
 
-Build FAILED.
+Build succeeded.
 
-Time Elapsed 00:00:06.34
+Time Elapsed 00:00:05.85

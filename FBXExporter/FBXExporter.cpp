@@ -155,7 +155,7 @@ void FBXExporter::ProcessJointsAndAnimations(FbxNode* inNode)
 		for (unsigned int clusterIndex = 0; clusterIndex < numOfClusters; ++clusterIndex)
 		{
 			FbxCluster* currCluster = currSkin->GetCluster(clusterIndex);
-			string currJointName = currCluster->GetLink()->GetName();
+			std::string currJointName = currCluster->GetLink()->GetName();
 			unsigned int currJointIndex = FindJointIndexUsingName(currJointName);
 			FbxAMatrix transformMatrix;						
 			FbxAMatrix transformLinkMatrix;					
@@ -219,7 +219,7 @@ void FBXExporter::ProcessJointsAndAnimations(FbxNode* inNode)
 	}
 }
 
-unsigned int FBXExporter::FindJointIndexUsingName(const string& inJointName)
+unsigned int FBXExporter::FindJointIndexUsingName(const std::string& inJointName)
 {
 	for(unsigned int i = 0; i < mSkeleton.mJoints.size(); ++i)
 	{
@@ -229,7 +229,7 @@ unsigned int FBXExporter::FindJointIndexUsingName(const string& inJointName)
 		}
 	}
 
-	throw exception("Skeleton information in FBX file is corrupted.");
+	throw std::exception("Skeleton information in FBX file is corrupted.");
 }
 
 
@@ -241,7 +241,7 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 	int vertexCounter = 0;
 
 	mIndexBuffer = new unsigned int[mTriangleCount * 3];
-	for (int i = 0; i < mTriangleCount; ++i)
+	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
 		XMFLOAT3 normal[3];
 		XMFLOAT3 tangent[3];
@@ -249,7 +249,7 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 		XMFLOAT2 UV[3][2];
 		mTriangles.push_back(new Triangle());
 
-		for (int j = 0; j < 3; ++j)
+		for (unsigned int j = 0; j < 3; ++j)
 		{
 			int ctrlPointIndex = currMesh->GetPolygonVertex(i, j);
 			CtrlPoint* currCtrlPoint = mControlPoints[ctrlPointIndex];
@@ -281,7 +281,6 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 			temp->SortBlendingInfoByWeight();
 
 			mTriangles.back()->mVertices.push_back(temp);
-			mVertices.push_back(temp);
 			++vertexCounter;
 		}
 	}
@@ -537,7 +536,29 @@ void FBXExporter::ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVerte
 // This function should take a while, though........
 void FBXExporter::Optimize()
 {
-	
+	for(unsigned int i = 0; i < mTriangles.size(); ++i)
+	{
+		for(unsigned int j = 0; j < 3; ++j)
+		{
+			
+		}
+	}
+}
+
+unsigned int FBXExporter::FindVertex(PNTIWVertex* inTargetVertex)
+{
+	for(unsigned int i = 0; i < mTriangles.size(); ++i)
+	{
+		for(unsigned int j = 0; j < 3; ++j)
+		{
+			// Find the first vertex in all vertices that has the same
+			// content as the target vertex
+			if(&mTriangles[i]->mVertices[j] == &inTargetVertex)
+			{
+				
+			}
+		}
+	}
 }
 
 void FBXExporter::AssociateMaterialToMesh(FbxNode* inNode)
@@ -579,7 +600,7 @@ void FBXExporter::AssociateMaterialToMesh(FbxNode* inNode)
 			break;
 
 			default:
-				throw exception("Invalid mapping mode for material\n");
+				throw std::exception("Invalid mapping mode for material\n");
 			}
 		}
 	}
@@ -700,14 +721,14 @@ void FBXExporter::ProcessMaterialTexture(FbxSurfaceMaterial* inMaterial, Materia
 				FbxLayeredTexture* layeredTexture = property.GetSrcObject<FbxLayeredTexture>(i);
 				if(layeredTexture)
 				{
-					throw exception("Layered Texture is currently unsupported\n");
+					throw std::exception("Layered Texture is currently unsupported\n");
 				}
 				else
 				{
 					FbxTexture* texture = property.GetSrcObject<FbxTexture>(i);
 					if(texture)
 					{
-						string textureType = property.GetNameAsCStr();
+						std::string textureType = property.GetNameAsCStr();
 						FbxFileTexture* fileTexture = FbxCast<FbxFileTexture>(texture);
 
 						if(fileTexture)
@@ -736,7 +757,7 @@ void FBXExporter::PrintMaterial()
 {
 	for(auto itr = mMaterialLookUp.begin(); itr != mMaterialLookUp.end(); ++itr)
 	{
-		itr->second->WriteToStream(cout);
+		itr->second->WriteToStream(std::cout);
 	}
 }
 
@@ -761,17 +782,19 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	}
 	inStream << "\t</triangles>" << std::endl;
 
+	/*
 	inStream << "\t<vertices count='" << mVertices.size() << "'>" << std::endl;
 	for (unsigned int i = 0; i < mVertices.size(); ++i)
 	{
 		inStream << "\t\t<vtx>" << std::endl;
-		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << -mVertices[i].mPosition.z << "</pos>" << std::endl;
-		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
-		inStream << "\t\t\t<sw>" << mVertices[i].mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
-		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
-		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
+		inStream << "\t\t\t<pos>" << mVertices[i]->mPosition.x << "," << mVertices[i]->mPosition.y << "," << -mVertices[i]->mPosition.z << "</pos>" << std::endl;
+		inStream << "\t\t\t<norm>" << mVertices[i]->mNormal.x << "," << mVertices[i]->mNormal.y << "," << -mVertices[i]->mNormal.z << "</norm>" << std::endl;
+		inStream << "\t\t\t<sw>" << mVertices[i]->mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
+		inStream << "\t\t\t<si>" << mVertices[i]->mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
+		inStream << "\t\t\t<tex>" << mVertices[i]->mUV.x << "," << 1.0f - mVertices[i]->mUV.y << "</tex>" << std::endl;
 		inStream << "\t\t</vtx>" << std::endl;
 	}
+	*/
 	inStream << "\t</vertices>" << std::endl;
 	inStream << "</itpmesh>" << std::endl;
 }
@@ -828,47 +851,27 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 /*
 void FBXExporter::ReduceVertices()
 {
-CleanupFbxManager();
-std::vector<Vertex::PNTVertex> newVertices;
-for (unsigned int i = 0; i < mVertices.size(); ++i)
-{
-int index = FindVertex(mVertices[i], newVertices);
-if (index == -1)
-{
-mIndexBuffer[i] = newVertices.size();
-newVertices.push_back(mVertices[i]);
-}
-else
-{
-mIndexBuffer[i] = index;
-}
-}
+	CleanupFbxManager();
+	std::vector<Vertex::PNTVertex> newVertices;
+	for (unsigned int i = 0; i < mVertices.size(); ++i)
+	{
+		int index = FindVertex(mVertices[i], newVertices);
+		if (index == -1)
+		{
+			mIndexBuffer[i] = newVertices.size();
+			newVertices.push_back(mVertices[i]);
+		}
+		else
+		{
+			mIndexBuffer[i] = index;
+		}
+	}
 
-mVertices = newVertices;
+	mVertices = newVertices;
 }
 */
 
 /*
-void FBXExporter::AssembleVertices()
-{
-	for (unsigned int i = 0; i < mTriangleCount * 3; ++i)
-	{
-		Vertex::PNTVertex tempVertex;
-		tempVertex.mPosition.x = mPositions[i * 4];
-		tempVertex.mPosition.y = mPositions[i * 4 + 1];
-		tempVertex.mPosition.z = mPositions[i * 4 + 2];
-		tempVertex.mNormal.x = mNormals[i * 3];
-		tempVertex.mNormal.y = mNormals[i * 3 + 1];
-		tempVertex.mNormal.z = mNormals[i * 3 + 2];
-		tempVertex.mUV.x = mUVs[i * 2];
-		tempVertex.mUV.y = mUVs[i * 2 + 1];
-		mVertices.push_back(tempVertex);
-	}
-
-	delete[] mPositions;
-	delete[] mNormals;
-	delete[] mUVs;
-}
 
 int FBXExporter::FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices)
 {
