@@ -80,12 +80,12 @@ void FBXExporter::ExportFBX()
 	PrintMaterial();
 	std::cout << "\n\n";
 
-	/*
-	std::ofstream meshOutput(".\\exportedModels\\oiler_s.itpmesh");
-	std::ofstream animOutput(".\\exportedModels\\oiler_s.itpanim");
+	
+	std::ofstream meshOutput(".\\exportedModels\\blaze_s.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\blaze_s.itpanim");
 	WriteMeshToStream(meshOutput);
 	WriteAnimationToStream(animOutput);
-	*/
+	
 	CleanupFbxManager();
 	std::cout << "\n\nExport Done!\n";
 }
@@ -884,7 +884,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>oiler_DIFF.tga</texture>" << std::endl;
+	inStream << "\t<texture>Blaze.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
