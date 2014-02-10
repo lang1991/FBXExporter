@@ -81,8 +81,8 @@ void FBXExporter::ExportFBX()
 	std::cout << "\n\n";
 
 	
-	std::ofstream meshOutput(".\\exportedModels\\blaze_s.itpmesh");
-	std::ofstream animOutput(".\\exportedModels\\blaze_s.itpanim");
+	std::ofstream meshOutput(".\\exportedModels\\rosieD.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\rosieD.itpanim");
 	WriteMeshToStream(meshOutput);
 	WriteAnimationToStream(animOutput);
 	
@@ -118,20 +118,28 @@ void FBXExporter::ProcessSkeletonHierarchy(FbxNode* inRootNode)
 	for (int childIndex = 0; childIndex < inRootNode->GetChildCount(); ++childIndex)
 	{
 		FbxNode* currNode = inRootNode->GetChild(childIndex);
-		if (currNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
-		{
-			ProcessSkeletonHierarchyRecursively(currNode, 0, 0, -1);
-		}
+		ProcessSkeletonHierarchyRecursively(currNode, 0, 0, -1);
+		//if (currNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+		//{
+		//}
 	}
 }
 
 void FBXExporter::ProcessSkeletonHierarchyRecursively(FbxNode* inNode, int inDepth, int myIndex, int inParentIndex)
 {
+	if(inNode->GetNodeAttribute() && inNode->GetNodeAttribute()->GetAttributeType() && inNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+	{
+		Joint currJoint;
+		currJoint.mParentIndex = inParentIndex;
+		currJoint.mName = inNode->GetName();
+		mSkeleton.mJoints.push_back(currJoint);
+	}
+	/*
 	Joint currJoint;
 	currJoint.mParentIndex = inParentIndex;
 	currJoint.mName = inNode->GetName();
 	mSkeleton.mJoints.push_back(currJoint);
-
+	*/
 	for (int i = 0; i < inNode->GetChildCount(); i++)
 	{
 		ProcessSkeletonHierarchyRecursively(inNode->GetChild(i), inDepth + 1, mSkeleton.mJoints.size(), myIndex);
@@ -884,7 +892,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>Blaze.tga</texture>" << std::endl;
+	inStream << "\t<texture>rosie_DIFF.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
