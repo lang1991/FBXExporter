@@ -8,8 +8,8 @@ FBXExporter::FBXExporter()
 {
 	mFBXManager = nullptr;
 	mFBXScene = nullptr;
-	mIndexBuffer = nullptr;
 	mTriangleCount = 0;
+	QueryPerformanceFrequency(&mCPUFreq);
 }
 
 bool FBXExporter::Initialize()
@@ -30,6 +30,10 @@ bool FBXExporter::Initialize()
 
 bool FBXExporter::LoadScene(const char* inFileName)
 {
+	LARGE_INTEGER start;
+	LARGE_INTEGER end;
+
+	QueryPerformanceCounter(&start);
 	FbxImporter* fbxImporter = FbxImporter::Create(mFBXManager, "myImporter");
 
 	if (!fbxImporter)
@@ -47,19 +51,42 @@ bool FBXExporter::LoadScene(const char* inFileName)
 		return false;
 	}
 	fbxImporter->Destroy();
+	QueryPerformanceCounter(&end);
+	std::cout << "Loading FBX File: " << ((end.QuadPart - start.QuadPart) / static_cast<float>(mCPUFreq.QuadPart)) << "s\n";
 
 	return true;
 }
 
 void FBXExporter::ExportFBX()
 {
+	LARGE_INTEGER start;
+	LARGE_INTEGER end;
+	
+
+	QueryPerformanceCounter(&start);
 	ProcessSkeletonHierarchy(mFBXScene->GetRootNode());
+	QueryPerformanceCounter(&end);
+	std::cout << "Processing Skeleton Hierarchy: " << ((end.QuadPart - start.QuadPart) / static_cast<float>(mCPUFreq.QuadPart)) << "s\n";
+
+	QueryPerformanceCounter(&start);
 	ProcessGeometry(mFBXScene->GetRootNode());
+	QueryPerformanceCounter(&end);
+	std::cout << "Processing Geometry: " << ((end.QuadPart - start.QuadPart) / static_cast<float>(mCPUFreq.QuadPart)) << "s\n";
+
+	QueryPerformanceCounter(&start);
+	Optimize();
+	QueryPerformanceCounter(&end);
+	std::cout << "Optimization: " << ((end.QuadPart - start.QuadPart) / static_cast<float>(mCPUFreq.QuadPart)) << "s\n";
 	PrintMaterial();
-	//std::ofstream meshOutput(".\\exportedModels\\droplet.itpmesh");
-	//std::ofstream animOutput(".\\exportedModels\\droplet.itpanim");
-	//WriteMeshToStream(meshOutput);
-	//WriteAnimationToStream(animOutput);
+	std::cout << "\n\n";
+
+	/*
+	std::ofstream meshOutput(".\\exportedModels\\oiler_s.itpmesh");
+	std::ofstream animOutput(".\\exportedModels\\oiler_s.itpanim");
+	WriteMeshToStream(meshOutput);
+	WriteAnimationToStream(animOutput);
+	*/
+	CleanupFbxManager();
 	std::cout << "\n\nExport Done!\n";
 }
 
@@ -239,15 +266,16 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 
 	mTriangleCount = currMesh->GetPolygonCount();
 	int vertexCounter = 0;
+	mTriangles.reserve(mTriangleCount);
 
-	mIndexBuffer = new unsigned int[mTriangleCount * 3];
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
 		XMFLOAT3 normal[3];
 		XMFLOAT3 tangent[3];
 		XMFLOAT3 binormal[3];
 		XMFLOAT2 UV[3][2];
-		mTriangles.push_back(new Triangle());
+		Triangle currTriangle;
+		mTriangles.push_back(currTriangle);
 
 		for (unsigned int j = 0; j < 3; ++j)
 		{
@@ -263,24 +291,24 @@ void FBXExporter::ProcessMesh(FbxNode* inNode)
 			}
 
 
-			mIndexBuffer[i * 3 + j] = vertexCounter;
-			PNTIWVertex* temp = new PNTIWVertex();
-			temp->mPosition = currCtrlPoint->mPosition;
-			temp->mNormal = normal[j];
-			temp->mUV = UV[j][0];
+			PNTIWVertex temp;
+			temp.mPosition = currCtrlPoint->mPosition;
+			temp.mNormal = normal[j];
+			temp.mUV = UV[j][0];
 			// Copy the blending info from each control point
 			for(unsigned int i = 0; i < currCtrlPoint->mBlendingInfo.size(); ++i)
 			{
 				VertexBlendingInfo currBlendingInfo;
 				currBlendingInfo.mBlendingIndex = currCtrlPoint->mBlendingInfo[i].mBlendingIndex;
 				currBlendingInfo.mBlendingWeight = currCtrlPoint->mBlendingInfo[i].mBlendingWeight;
-				temp->mVertexBlendingInfos.push_back(currBlendingInfo);
+				temp.mVertexBlendingInfos.push_back(currBlendingInfo);
 			}
 			// Sort the blending info so that later we can remove
 			// duplicated vertices
-			temp->SortBlendingInfoByWeight();
+			temp.SortBlendingInfoByWeight();
 
-			mTriangles.back()->mVertices.push_back(temp);
+			mVertices.push_back(temp);
+			mTriangles.back().mIndices.push_back(vertexCounter);
 			++vertexCounter;
 		}
 	}
@@ -536,30 +564,91 @@ void FBXExporter::ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVerte
 // This function should take a while, though........
 void FBXExporter::Optimize()
 {
+	// First get a list of unique vertices
+	std::vector<PNTIWVertex> uniqueVertices;
 	for(unsigned int i = 0; i < mTriangles.size(); ++i)
 	{
 		for(unsigned int j = 0; j < 3; ++j)
 		{
-			
-		}
-	}
-}
-
-unsigned int FBXExporter::FindVertex(PNTIWVertex* inTargetVertex)
-{
-	for(unsigned int i = 0; i < mTriangles.size(); ++i)
-	{
-		for(unsigned int j = 0; j < 3; ++j)
-		{
-			// Find the first vertex in all vertices that has the same
-			// content as the target vertex
-			if(&mTriangles[i]->mVertices[j] == &inTargetVertex)
+			// If current vertex has not been added to
+			// our unique vertex list, then we add it
+			if(FindVertex(mVertices[i * 3 + j], uniqueVertices) == -1)
 			{
-				
+				uniqueVertices.push_back(mVertices[i * 3 + j]);
 			}
 		}
 	}
+
+	// Now we update the index buffer
+	for(unsigned int i = 0; i < mTriangles.size(); ++i)
+	{
+		for(unsigned int j = 0; j < 3; ++j)
+		{
+			mTriangles[i].mIndices[j] = FindVertex(mVertices[i * 3 + j], uniqueVertices);
+		}
+	}
+	
+	mVertices.clear();
+	mVertices = uniqueVertices;
+	uniqueVertices.clear();
+
+	// Now we sort the triangles by materials to reduce 
+	// shader's workload
+	std::sort(mTriangles.begin(), mTriangles.end());
 }
+
+int FBXExporter::FindVertex(const PNTIWVertex& inTargetVertex, const std::vector<PNTIWVertex>& uniqueVertices)
+{
+	for(unsigned int i = 0; i < uniqueVertices.size(); ++i)
+	{
+		if(inTargetVertex == uniqueVertices[i])
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+/*
+void FBXExporter::ReduceVertices()
+{
+	CleanupFbxManager();
+	std::vector<Vertex::PNTVertex> newVertices;
+	for (unsigned int i = 0; i < mVertices.size(); ++i)
+	{
+		int index = FindVertex(mVertices[i], newVertices);
+		if (index == -1)
+		{
+			mIndexBuffer[i] = newVertices.size();
+			newVertices.push_back(mVertices[i]);
+		}
+		else
+		{
+			mIndexBuffer[i] = index;
+		}
+	}
+
+	mVertices = newVertices;
+}
+*/
+
+/*
+
+int FBXExporter::FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices)
+{
+	int index = -1;
+	for (unsigned int i = 0; i < inVertices.size(); ++i)
+	{
+		if (inTarget == inVertices[i])
+		{
+			index = i;
+		}
+	}
+
+	return index;
+}
+*/
 
 void FBXExporter::AssociateMaterialToMesh(FbxNode* inNode)
 {
@@ -583,7 +672,7 @@ void FBXExporter::AssociateMaterialToMesh(FbxNode* inNode)
 					for (unsigned int i = 0; i < mTriangleCount; ++i)
 					{
 						unsigned int materialIndex = materialIndices->GetAt(i);
-						mTriangles[i]->mMaterialIndex = materialIndex;
+						mTriangles[i].mMaterialIndex = materialIndex;
 					}
 				}
 			}
@@ -594,7 +683,7 @@ void FBXExporter::AssociateMaterialToMesh(FbxNode* inNode)
 				unsigned int materialIndex = materialIndices->GetAt(0);
 				for (unsigned int i = 0; i < mTriangleCount; ++i)
 				{
-					mTriangles[i]->mMaterialIndex = materialIndex;
+					mTriangles[i].mMaterialIndex = materialIndex;
 				}
 			}
 			break;
@@ -758,6 +847,15 @@ void FBXExporter::PrintMaterial()
 	for(auto itr = mMaterialLookUp.begin(); itr != mMaterialLookUp.end(); ++itr)
 	{
 		itr->second->WriteToStream(std::cout);
+		std::cout << "\n\n";
+	}
+}
+
+void FBXExporter::PrintTriangles()
+{
+	for(unsigned int i = 0; i < mTriangles.size(); ++i)
+	{
+		std::cout << "Triangle# " << i + 1 << " Material Index: " << mTriangles[i].mMaterialIndex << "\n";
 	}
 }
 
@@ -765,36 +863,50 @@ void FBXExporter::CleanupFbxManager()
 {
 	mFBXScene->Destroy();
 	mFBXManager->Destroy();
+
+	mTriangles.clear();
+
+	mVertices.clear();
+
+	mSkeleton.mJoints.clear();
+
+	for(auto itr = mMaterialLookUp.begin(); itr != mMaterialLookUp.end(); ++itr)
+	{
+		delete itr->second;
+	}
+	mMaterialLookUp.clear();
 }
 
 void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 {
+	
 	inStream << "<?xml version='1.0' encoding='UTF-8' ?>" << std::endl;
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>tenshii_DIFF.tga</texture>" << std::endl;
+	inStream << "\t<texture>oiler_DIFF.tga</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
+
 	for (unsigned int i = 0; i < mTriangleCount; ++i)
 	{
 		// We need to change the culling order
-		inStream << "\t\t<tri>" << mIndexBuffer[i * 3] << "," << mIndexBuffer[i * 3 + 2] << "," << mIndexBuffer[i * 3 + 1] << "</tri>" << std::endl;
+		inStream << "\t\t<tri>" << mTriangles[i].mIndices[0] << "," << mTriangles[i].mIndices[2] << "," << mTriangles[i].mIndices[1] << "</tri>" << std::endl;
 	}
 	inStream << "\t</triangles>" << std::endl;
 
-	/*
+	
 	inStream << "\t<vertices count='" << mVertices.size() << "'>" << std::endl;
 	for (unsigned int i = 0; i < mVertices.size(); ++i)
 	{
 		inStream << "\t\t<vtx>" << std::endl;
-		inStream << "\t\t\t<pos>" << mVertices[i]->mPosition.x << "," << mVertices[i]->mPosition.y << "," << -mVertices[i]->mPosition.z << "</pos>" << std::endl;
-		inStream << "\t\t\t<norm>" << mVertices[i]->mNormal.x << "," << mVertices[i]->mNormal.y << "," << -mVertices[i]->mNormal.z << "</norm>" << std::endl;
-		inStream << "\t\t\t<sw>" << mVertices[i]->mVertexBlendingInfos[0].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[1].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[2].mBlendingWeight << "," << mVertices[i]->mVertexBlendingInfos[3].mBlendingWeight << "</sw>" << std::endl;
-		inStream << "\t\t\t<si>" << mVertices[i]->mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i]->mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
-		inStream << "\t\t\t<tex>" << mVertices[i]->mUV.x << "," << 1.0f - mVertices[i]->mUV.y << "</tex>" << std::endl;
+		inStream << "\t\t\t<pos>" << mVertices[i].mPosition.x << "," << mVertices[i].mPosition.y << "," << -mVertices[i].mPosition.z << "</pos>" << std::endl;
+		inStream << "\t\t\t<norm>" << mVertices[i].mNormal.x << "," << mVertices[i].mNormal.y << "," << -mVertices[i].mNormal.z << "</norm>" << std::endl;
+		inStream << "\t\t\t<sw>" << static_cast<float>(mVertices[i].mVertexBlendingInfos[0].mBlendingWeight) << "," << static_cast<float>(mVertices[i].mVertexBlendingInfos[1].mBlendingWeight) << "," << static_cast<float>(mVertices[i].mVertexBlendingInfos[2].mBlendingWeight) << "," << static_cast<float>(mVertices[i].mVertexBlendingInfos[3].mBlendingWeight) << "</sw>" << std::endl;
+		inStream << "\t\t\t<si>" << mVertices[i].mVertexBlendingInfos[0].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[1].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[2].mBlendingIndex << "," << mVertices[i].mVertexBlendingInfos[3].mBlendingIndex << "</si>" << std::endl;
+		inStream << "\t\t\t<tex>" << mVertices[i].mUV.x << "," << 1.0f - mVertices[i].mUV.y << "</tex>" << std::endl;
 		inStream << "\t\t</vtx>" << std::endl;
 	}
-	*/
+	
 	inStream << "\t</vertices>" << std::endl;
 	inStream << "</itpmesh>" << std::endl;
 }
@@ -847,43 +959,3 @@ void FBXExporter::WriteAnimationToStream(std::ostream& inStream)
 	inStream << "</animations>\n";
 	inStream << "</itpanim>";
 }
-
-/*
-void FBXExporter::ReduceVertices()
-{
-	CleanupFbxManager();
-	std::vector<Vertex::PNTVertex> newVertices;
-	for (unsigned int i = 0; i < mVertices.size(); ++i)
-	{
-		int index = FindVertex(mVertices[i], newVertices);
-		if (index == -1)
-		{
-			mIndexBuffer[i] = newVertices.size();
-			newVertices.push_back(mVertices[i]);
-		}
-		else
-		{
-			mIndexBuffer[i] = index;
-		}
-	}
-
-	mVertices = newVertices;
-}
-*/
-
-/*
-
-int FBXExporter::FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices)
-{
-	int index = -1;
-	for (unsigned int i = 0; i < inVertices.size(); ++i)
-	{
-		if (inTarget == inVertices[i])
-		{
-			index = i;
-		}
-	}
-
-	return index;
-}
-*/

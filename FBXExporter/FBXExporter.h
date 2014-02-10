@@ -18,13 +18,13 @@ private:
 	FbxScene* mFBXScene;
 	std::unordered_map<unsigned int, CtrlPoint*> mControlPoints; 
 	unsigned int mTriangleCount;
-	unsigned int* mIndexBuffer;
-	std::vector<Triangle*> mTriangles;
+	std::vector<Triangle> mTriangles;
+	std::vector<PNTIWVertex> mVertices;
 	Skeleton mSkeleton;
 	std::unordered_map<unsigned int, Material*> mMaterialLookUp;
 	FbxLongLong mAnimationLength;
 	std::string mAnimationName;
-	
+	LARGE_INTEGER mCPUFreq;
 	
 
 private:
@@ -40,14 +40,14 @@ private:
 	void ReadBinormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, XMFLOAT3& outBinormal);
 	void ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, XMFLOAT3& outTangent);
 	void Optimize();
-	unsigned int FindVertex(PNTIWVertex* inTargetVertex);
+	int FindVertex(const PNTIWVertex& inTargetVertex, const std::vector<PNTIWVertex>& uniqueVertices);
 
 	void AssociateMaterialToMesh(FbxNode* inNode);
 	void ProcessMaterials(FbxNode* inNode);
 	void ProcessMaterialAttribute(FbxSurfaceMaterial* inMaterial, unsigned int inMaterialIndex);
 	void ProcessMaterialTexture(FbxSurfaceMaterial* inMaterial, Material* ioMaterial);
 	void PrintMaterial();
-
+	void PrintTriangles();
 	
 	void CleanupFbxManager();
 	void WriteMeshToStream(std::ostream& inStream);

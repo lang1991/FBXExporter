@@ -64,6 +64,16 @@ struct Joint
 		mGlobalBindposeInverse.SetIdentity();
 		mParentIndex = -1;
 	}
+
+	~Joint()
+	{
+		while(mAnimation)
+		{
+			Keyframe* temp = mAnimation->mNext;
+			delete mAnimation;
+			mAnimation = temp;
+		}
+	}
 };
 
 struct Skeleton
@@ -73,9 +83,14 @@ struct Skeleton
 
 struct Triangle
 {
-	std::vector<PNTIWVertex*> mVertices;
+	std::vector<unsigned int> mIndices; 
 	std::string mMaterialName;
 	unsigned int mMaterialIndex;
+
+	bool operator<(const Triangle& rhs)
+	{
+		return mMaterialIndex < rhs.mMaterialIndex;
+	}
 };
 
 
