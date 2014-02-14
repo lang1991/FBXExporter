@@ -56,17 +56,21 @@ struct PNTIWVertex
 	{
 		bool sameBlendingInfo = true;
 
-		// Each vertex should only have 4 index-weight blending info pairs
-		for(unsigned int i = 0; i < 4; ++i)
+		// We only compare the blending info when there is blending info
+		if(!(mVertexBlendingInfos.empty() && rhs.mVertexBlendingInfos.empty()))
 		{
-			if(mVertexBlendingInfos[i].mBlendingIndex != rhs.mVertexBlendingInfos[i].mBlendingIndex ||
-				abs(mVertexBlendingInfos[i].mBlendingWeight - rhs.mVertexBlendingInfos[i].mBlendingWeight) > 0.001)
+			// Each vertex should only have 4 index-weight blending info pairs
+			for (unsigned int i = 0; i < 4; ++i)
 			{
-				sameBlendingInfo = false;
-				break;
+				if (mVertexBlendingInfos[i].mBlendingIndex != rhs.mVertexBlendingInfos[i].mBlendingIndex ||
+					abs(mVertexBlendingInfos[i].mBlendingWeight - rhs.mVertexBlendingInfos[i].mBlendingWeight) > 0.001)
+				{
+					sameBlendingInfo = false;
+					break;
+				}
 			}
 		}
-
+		
 		bool result1 = MathHelper::CompareVector3WithEpsilon(mPosition, rhs.mPosition);
 		bool result2 = MathHelper::CompareVector3WithEpsilon(mNormal, rhs.mNormal);
 		bool result3 = MathHelper::CompareVector2WithEpsilon(mUV, rhs.mUV);

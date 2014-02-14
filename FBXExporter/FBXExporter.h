@@ -9,7 +9,7 @@ public:
 	FBXExporter();
 	~FBXExporter();
 	bool Initialize();
-	bool LoadScene(const char* inFileName);
+	bool LoadScene(const char* inFileName, const char* inOutputPath);
 	
 	void ExportFBX();
 
@@ -17,6 +17,8 @@ private:
 	FbxManager* mFBXManager;
 	FbxScene* mFBXScene;
 	std::string mInputFilePath;
+	std::string mOutputFilePath;
+	bool mHasAnimation;
 	std::unordered_map<unsigned int, CtrlPoint*> mControlPoints; 
 	unsigned int mTriangleCount;
 	std::vector<Triangle> mTriangles;

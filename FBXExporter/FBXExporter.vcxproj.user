@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>.\\testModels\\RosieDeath.fbx</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>.\\testModels\\skyBreakerAttack.fbx .\\exportedModels\\</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
