@@ -67,12 +67,6 @@ struct PNTIWVertex
 			}
 		}
 
-		/*MathHelper::CompareVector3WithEpsilon(mPosition, rhs.mPosition) &&
-			MathHelper::CompareVector3WithEpsilon(mNormal, rhs.mNormal) &&
-			MathHelper::CompareVector2WithEpsilon(mUV, rhs.mUV) &&
-			sameBlendingInfo;
-			*/
-
 		bool result1 = MathHelper::CompareVector3WithEpsilon(mPosition, rhs.mPosition);
 		bool result2 = MathHelper::CompareVector3WithEpsilon(mNormal, rhs.mNormal);
 		bool result3 = MathHelper::CompareVector2WithEpsilon(mUV, rhs.mUV);

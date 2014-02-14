@@ -32,6 +32,7 @@ bool FBXExporter::LoadScene(const char* inFileName)
 {
 	LARGE_INTEGER start;
 	LARGE_INTEGER end;
+	mInputFilePath = inFileName;
 
 	QueryPerformanceCounter(&start);
 	FbxImporter* fbxImporter = FbxImporter::Create(mFBXManager, "myImporter");
@@ -80,9 +81,13 @@ void FBXExporter::ExportFBX()
 	PrintMaterial();
 	std::cout << "\n\n";
 
-	
-	std::ofstream meshOutput(".\\exportedModels\\rosieD.itpmesh");
-	std::ofstream animOutput(".\\exportedModels\\rosieD.itpanim");
+	std::string genericFileName = Utilities::GetFileName(mInputFilePath);
+	genericFileName = Utilities::RemoveSuffix(genericFileName);
+
+	std::string outputMeshName = ".\\exportedModels\\" + genericFileName + ".itpmesh";
+	std::string outputNnimName = ".\\exportedModels\\" + genericFileName + ".itpanim";
+	std::ofstream meshOutput(outputMeshName);
+	std::ofstream animOutput(outputNnimName);
 	WriteMeshToStream(meshOutput);
 	WriteAnimationToStream(animOutput);
 	
@@ -119,9 +124,6 @@ void FBXExporter::ProcessSkeletonHierarchy(FbxNode* inRootNode)
 	{
 		FbxNode* currNode = inRootNode->GetChild(childIndex);
 		ProcessSkeletonHierarchyRecursively(currNode, 0, 0, -1);
-		//if (currNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
-		//{
-		//}
 	}
 }
 
@@ -134,12 +136,6 @@ void FBXExporter::ProcessSkeletonHierarchyRecursively(FbxNode* inNode, int inDep
 		currJoint.mName = inNode->GetName();
 		mSkeleton.mJoints.push_back(currJoint);
 	}
-	/*
-	Joint currJoint;
-	currJoint.mParentIndex = inParentIndex;
-	currJoint.mName = inNode->GetName();
-	mSkeleton.mJoints.push_back(currJoint);
-	*/
 	for (int i = 0; i < inNode->GetChildCount(); i++)
 	{
 		ProcessSkeletonHierarchyRecursively(inNode->GetChild(i), inDepth + 1, mSkeleton.mJoints.size(), myIndex);
@@ -892,7 +888,7 @@ void FBXExporter::WriteMeshToStream(std::ostream& inStream)
 	inStream << "<itpmesh>" << std::endl;
 	inStream << "\t<!-- position, normal, skinning weights, skinning indices, texture-->" << std::endl;
 	inStream << "\t<format>pnst</format>" << std::endl;
-	inStream << "\t<texture>rosie_DIFF.tga</texture>" << std::endl;
+	inStream << "\t<texture>" << mMaterialLookUp[0]->mDiffuseMapName << "</texture>" << std::endl;
 	inStream << "\t<triangles count='" << mTriangleCount << "'>" << std::endl;
 
 	for (unsigned int i = 0; i < mTriangleCount; ++i)

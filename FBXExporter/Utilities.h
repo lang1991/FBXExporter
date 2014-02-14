@@ -104,6 +104,10 @@ public:
 	static void PrintMatrix(FbxMatrix& inMatrix);
 	
 	static FbxAMatrix GetGeometryTransformation(FbxNode* inNode);
+
+	static std::string GetFileName(const std::string& inInput);
+
+	static std::string RemoveSuffix(const std::string& inInput);
 };
 
 

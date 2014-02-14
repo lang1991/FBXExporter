@@ -16,6 +16,7 @@ public:
 private:
 	FbxManager* mFBXManager;
 	FbxScene* mFBXScene;
+	std::string mInputFilePath;
 	std::unordered_map<unsigned int, CtrlPoint*> mControlPoints; 
 	unsigned int mTriangleCount;
 	std::vector<Triangle> mTriangles;
@@ -52,7 +53,4 @@ private:
 	void CleanupFbxManager();
 	void WriteMeshToStream(std::ostream& inStream);
 	void WriteAnimationToStream(std::ostream& inStream);
-	//int FindVertex(const Vertex::PNTVertex& inTarget, const std::vector<Vertex::PNTVertex>& inVertices);
-	//void ReduceVertices();
-	
 };

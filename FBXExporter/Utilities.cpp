@@ -37,3 +37,30 @@ FbxAMatrix Utilities::GetGeometryTransformation(FbxNode* inNode)
 	return FbxAMatrix(lT, lR, lS);
 }
 
+std::string Utilities::GetFileName(const std::string& inInput)
+{
+	std::string seperator("\\");
+	unsigned int pos = inInput.find_last_of(seperator);
+	if(pos != std::string::npos)
+	{
+		return inInput.substr(pos + 1);
+	}
+	else
+	{
+		return inInput;
+	}
+}
+
+std::string Utilities::RemoveSuffix(const std::string& inInput)
+{
+	std::string seperator(".");
+	unsigned int pos = inInput.find_last_of(seperator);
+	if (pos != std::string::npos)
+	{
+		return inInput.substr(0, pos);
+	}
+	else
+	{
+		return inInput;
+	}
+}
